@@ -1,1 +1,304 @@
-function ssc_init(){if(document.body){var a=document.body,b=document.documentElement,c=window.innerHeight,d=a.scrollHeight;if(ssc_root=document.compatMode.indexOf("CSS")>=0?b:a,ssc_activeElement=a,ssc_initdone=!0,top!=self)ssc_frame=!0;else if(d>c&&(a.offsetHeight<=c||b.offsetHeight<=c)&&(ssc_root.style.height="auto",ssc_root.offsetHeight<=c)){var e=document.createElement("div");e.style.clear="both",a.appendChild(e)}ssc_fixedback||(a.style.backgroundAttachment="scroll",b.style.backgroundAttachment="scroll"),ssc_keyboardsupport&&ssc_addEvent("keydown",ssc_keydown)}}function ssc_scrollArray(a,b,c,d){if(d||(d=1e3),ssc_directionCheck(b,c),ssc_que.push({x:b,y:c,lastX:0>b?.99:-.99,lastY:0>c?.99:-.99,start:+new Date}),!ssc_pending){var e=function(){for(var f=+new Date,g=0,h=0,i=0;i<ssc_que.length;i++){var j=ssc_que[i],k=f-j.start,l=k>=ssc_animtime,m=l?1:k/ssc_animtime;ssc_pulseAlgorithm&&(m=ssc_pulse(m));var n=j.x*m-j.lastX>>0,o=j.y*m-j.lastY>>0;g+=n,h+=o,j.lastX+=n,j.lastY+=o,l&&(ssc_que.splice(i,1),i--)}if(b){var p=a.scrollLeft;a.scrollLeft+=g,g&&a.scrollLeft===p&&(b=0)}if(c){var q=a.scrollTop;a.scrollTop+=h,h&&a.scrollTop===q&&(c=0)}b||c||(ssc_que=[]),ssc_que.length?setTimeout(e,d/ssc_framerate+1):ssc_pending=!1};setTimeout(e,0),ssc_pending=!0}}function ssc_wheel(a){ssc_initdone||ssc_init();var b=a.target,c=ssc_overflowingAncestor(b);if(!c||a.defaultPrevented||ssc_isNodeName(ssc_activeElement,"embed")||ssc_isNodeName(b,"embed")&&/\.pdf/i.test(b.src))return!0;var d=a.wheelDeltaX||0,e=a.wheelDeltaY||0;d||e||(e=a.wheelDelta||0),Math.abs(d)>1.2&&(d*=ssc_stepsize/120),Math.abs(e)>1.2&&(e*=ssc_stepsize/120),ssc_scrollArray(c,-d,-e),a.preventDefault()}function ssc_keydown(a){var b=a.target,c=a.ctrlKey||a.altKey||a.metaKey;if(/input|textarea|embed/i.test(b.nodeName)||b.isContentEditable||a.defaultPrevented||c)return!0;if(ssc_isNodeName(b,"button")&&a.keyCode===ssc_key.spacebar)return!0;var d,e=0,f=0,g=ssc_overflowingAncestor(ssc_activeElement),h=g.clientHeight;switch(g==document.body&&(h=window.innerHeight),a.keyCode){case ssc_key.up:f=-ssc_arrowscroll;break;case ssc_key.down:f=ssc_arrowscroll;break;case ssc_key.spacebar:d=a.shiftKey?1:-1,f=.9*-d*h;break;case ssc_key.pageup:f=.9*-h;break;case ssc_key.pagedown:f=.9*h;break;case ssc_key.home:f=-g.scrollTop;break;case ssc_key.end:var i=g.scrollHeight-g.scrollTop-h;f=i>0?i+10:0;break;case ssc_key.left:e=-ssc_arrowscroll;break;case ssc_key.right:e=ssc_arrowscroll;break;default:return!0}ssc_scrollArray(g,e,f),a.preventDefault()}function ssc_mousedown(a){ssc_activeElement=a.target}function ssc_setCache(a,b){for(var c=a.length;c--;)ssc_cache[ssc_uniqueID(a[c])]=b;return b}function ssc_overflowingAncestor(a){var b=[],c=ssc_root.scrollHeight;do{var d=ssc_cache[ssc_uniqueID(a)];if(d)return ssc_setCache(b,d);if(b.push(a),c===a.scrollHeight){if(!ssc_frame||ssc_root.clientHeight+10<c)return ssc_setCache(b,document.body)}else if(a.clientHeight+10<a.scrollHeight&&(overflow=getComputedStyle(a,"").getPropertyValue("overflow"),"scroll"===overflow||"auto"===overflow))return ssc_setCache(b,a)}while(a=a.parentNode)}function ssc_addEvent(a,b,c){window.addEventListener(a,b,c||!1)}function ssc_removeEvent(a,b,c){window.removeEventListener(a,b,c||!1)}function ssc_isNodeName(a,b){return a.nodeName.toLowerCase()===b.toLowerCase()}function ssc_directionCheck(a,b){a=a>0?1:-1,b=b>0?1:-1,(ssc_direction.x!==a||ssc_direction.y!==b)&&(ssc_direction.x=a,ssc_direction.y=b,ssc_que=[])}function ssc_pulse_(a){var b,c,d;return a*=ssc_pulseScale,1>a?b=a-(1-Math.exp(-a)):(c=Math.exp(-1),a-=1,d=1-Math.exp(-a),b=c+d*(1-c)),b*ssc_pulseNormalize}function ssc_pulse(a){return a>=1?1:0>=a?0:(1==ssc_pulseNormalize&&(ssc_pulseNormalize/=ssc_pulse_(1)),ssc_pulse_(a))}var ssc_framerate=150,ssc_animtime=500,ssc_stepsize=150,ssc_pulseAlgorithm=!0,ssc_pulseScale=6,ssc_pulseNormalize=1,ssc_keyboardsupport=!0,ssc_arrowscroll=50,ssc_frame=!1,ssc_direction={x:0,y:0},ssc_initdone=!1,ssc_fixedback=!0,ssc_root=document.documentElement,ssc_activeElement,ssc_key={left:37,up:38,right:39,down:40,spacebar:32,pageup:33,pagedown:34,end:35,home:36},ssc_que=[],ssc_pending=!1,ssc_cache={};setInterval(function(){ssc_cache={}},1e4);var ssc_uniqueID=function(){var a=0;return function(b){return b.ssc_uniqueID||(b.ssc_uniqueID=a++)}}(),ischrome=/chrome/.test(navigator.userAgent.toLowerCase());ischrome&&(ssc_addEvent("mousedown",ssc_mousedown),ssc_addEvent("mousewheel",ssc_wheel),ssc_addEvent("load",ssc_init));
+// SmoothScroll v0.9.9
+// Licensed under the terms of the MIT license.
+
+// People involved
+// - Balazs Galambosi: maintainer (CHANGELOG.txt)
+// - Patrick Brunner (patrickb1991@gmail.com)
+// - Michael Herf: ssc_pulse Algorithm
+
+function ssc_init() {
+  if (!document.body) return;
+  var e = document.body;
+  var t = document.documentElement;
+  var n = window.innerHeight;
+  var r = e.scrollHeight;
+  ssc_root = document.compatMode.indexOf("CSS") >= 0 ? t : e;
+  ssc_activeElement = e;
+  ssc_initdone = true;
+  if (top != self) {
+    ssc_frame = true
+  } else if (r > n && (e.offsetHeight <= n || t.offsetHeight <= n)) {
+    ssc_root.style.height = "auto";
+    if (ssc_root.offsetHeight <= n) {
+      var i = document.createElement("div");
+      i.style.clear = "both";
+      e.appendChild(i)
+    }
+  }
+  if (!ssc_fixedback) {
+    e.style.backgroundAttachment = "scroll";
+    t.style.backgroundAttachment = "scroll"
+  }
+  if (ssc_keyboardsupport) {
+    ssc_addEvent("keydown", ssc_keydown)
+  }
+}
+
+function ssc_scrollArray(e, t, n, r) {
+  r || (r = 1e3);
+  ssc_directionCheck(t, n);
+  ssc_que.push({
+    x: t,
+    y: n,
+    lastX: t < 0 ? .99 : -.99,
+    lastY: n < 0 ? .99 : -.99,
+    start: +(new Date)
+  });
+  if (ssc_pending) {
+    return
+  }
+  var i = function () {
+    var s = +(new Date);
+    var o = 0;
+    var u = 0;
+    for (var a = 0; a < ssc_que.length; a++) {
+      var f = ssc_que[a];
+      var l = s - f.start;
+      var c = l >= ssc_animtime;
+      var h = c ? 1 : l / ssc_animtime;
+      if (ssc_pulseAlgorithm) {
+        h = ssc_pulse(h)
+      }
+      var p = f.x * h - f.lastX >> 0;
+      var d = f.y * h - f.lastY >> 0;
+      o += p;
+      u += d;
+      f.lastX += p;
+      f.lastY += d;
+      if (c) {
+        ssc_que.splice(a, 1);
+        a--
+      }
+    }
+    if (t) {
+      var v = e.scrollLeft;
+      e.scrollLeft += o;
+      if (o && e.scrollLeft === v) {
+        t = 0
+      }
+    }
+    if (n) {
+      var m = e.scrollTop;
+      e.scrollTop += u;
+      if (u && e.scrollTop === m) {
+        n = 0
+      }
+    }
+    if (!t && !n) {
+      ssc_que = []
+    }
+    if (ssc_que.length) {
+      setTimeout(i, r / ssc_framerate + 1)
+    } else {
+      ssc_pending = false
+    }
+  };
+  setTimeout(i, 0);
+  ssc_pending = true
+}
+
+function ssc_wheel(e) {
+  if (!ssc_initdone) {
+    ssc_init()
+  }
+  var t = e.target;
+  var n = ssc_overflowingAncestor(t);
+  if (!n || e.defaultPrevented || ssc_isNodeName(ssc_activeElement, "embed") || ssc_isNodeName(t, "embed") && /\.pdf/i.test(t.src)) {
+    return true
+  }
+  var r = e.wheelDeltaX || 0;
+  var i = e.wheelDeltaY || 0;
+  if (!r && !i) {
+    i = e.wheelDelta || 0
+  }
+  if (Math.abs(r) > 1.2) {
+    r *= ssc_stepsize / 120
+  }
+  if (Math.abs(i) > 1.2) {
+    i *= ssc_stepsize / 120
+  }
+  ssc_scrollArray(n, -r, -i);
+  e.preventDefault()
+}
+
+function ssc_keydown(e) {
+  var t = e.target;
+  var n = e.ctrlKey || e.altKey || e.metaKey;
+  if (/input|textarea|embed/i.test(t.nodeName) || t.isContentEditable || e.defaultPrevented || n) {
+    return true
+  }
+  if (ssc_isNodeName(t, "button") && e.keyCode === ssc_key.spacebar) {
+    return true
+  }
+  var r, i = 0,
+    s = 0;
+  var o = ssc_overflowingAncestor(ssc_activeElement);
+  var u = o.clientHeight;
+  if (o == document.body) {
+    u = window.innerHeight
+  }
+  switch (e.keyCode) {
+    case ssc_key.up:
+      s = -ssc_arrowscroll;
+      break;
+    case ssc_key.down:
+      s = ssc_arrowscroll;
+      break;
+    case ssc_key.spacebar:
+      r = e.shiftKey ? 1 : -1;
+      s = -r * u * .9;
+      break;
+    case ssc_key.pageup:
+      s = -u * .9;
+      break;
+    case ssc_key.pagedown:
+      s = u * .9;
+      break;
+    case ssc_key.home:
+      s = -o.scrollTop;
+      break;
+    case ssc_key.end:
+      var a = o.scrollHeight - o.scrollTop - u;
+      s = a > 0 ? a + 10 : 0;
+      break;
+    case ssc_key.left:
+      i = -ssc_arrowscroll;
+      break;
+    case ssc_key.right:
+      i = ssc_arrowscroll;
+      break;
+    default:
+      return true
+  }
+  ssc_scrollArray(o, i, s);
+  e.preventDefault()
+}
+
+function ssc_mousedown(e) {
+  ssc_activeElement = e.target
+}
+
+function ssc_setCache(e, t) {
+  for (var n = e.length; n--;) ssc_cache[ssc_uniqueID(e[n])] = t;
+  return t
+}
+
+function ssc_overflowingAncestor(e) {
+  var t = [];
+  var n = ssc_root.scrollHeight;
+  do {
+    var r = ssc_cache[ssc_uniqueID(e)];
+    if (r) {
+      return ssc_setCache(t, r)
+    }
+    t.push(e);
+    if (n === e.scrollHeight) {
+      if (!ssc_frame || ssc_root.clientHeight + 10 < n) {
+        return ssc_setCache(t, document.body)
+      }
+    } else if (e.clientHeight + 10 < e.scrollHeight) {
+      overflow = getComputedStyle(e, "").getPropertyValue("overflow");
+      if (overflow === "scroll" || overflow === "auto") {
+        return ssc_setCache(t, e)
+      }
+    }
+  } while (e = e.parentNode)
+}
+
+function ssc_addEvent(e, t, n) {
+  window.addEventListener(e, t, n || false)
+}
+
+function ssc_removeEvent(e, t, n) {
+  window.removeEventListener(e, t, n || false)
+}
+
+function ssc_isNodeName(e, t) {
+  return e.nodeName.toLowerCase() === t.toLowerCase()
+}
+
+function ssc_directionCheck(e, t) {
+  e = e > 0 ? 1 : -1;
+  t = t > 0 ? 1 : -1;
+  if (ssc_direction.x !== e || ssc_direction.y !== t) {
+    ssc_direction.x = e;
+    ssc_direction.y = t;
+    ssc_que = []
+  }
+}
+
+function ssc_pulse_(e) {
+  var t, n, r;
+  e = e * ssc_pulseScale;
+  if (e < 1) {
+    t = e - (1 - Math.exp(-e))
+  } else {
+    n = Math.exp(-1);
+    e -= 1;
+    r = 1 - Math.exp(-e);
+    t = n + r * (1 - n)
+  }
+  return t * ssc_pulseNormalize
+}
+
+function ssc_pulse(e) {
+  if (e >= 1) return 1;
+  if (e <= 0) return 0;
+  if (ssc_pulseNormalize == 1) {
+    ssc_pulseNormalize /= ssc_pulse_(1)
+  }
+  return ssc_pulse_(e)
+}
+
+var ssc_framerate = 150;
+var ssc_animtime = 500;
+var ssc_stepsize = 150;
+var ssc_pulseAlgorithm = true;
+var ssc_pulseScale = 6;
+var ssc_pulseNormalize = 1;
+var ssc_keyboardsupport = true;
+var ssc_arrowscroll = 50;
+var ssc_frame = false;
+var ssc_direction = {
+  x: 0,
+  y: 0
+};
+
+var ssc_initdone = false;
+var ssc_fixedback = true;
+var ssc_root = document.documentElement;
+var ssc_activeElement;
+var ssc_key = {
+  left: 37,
+  up: 38,
+  right: 39,
+  down: 40,
+  spacebar: 32,
+  pageup: 33,
+  pagedown: 34,
+  end: 35,
+  home: 36
+};
+
+var ssc_que = [];
+var ssc_pending = false;
+var ssc_cache = {};
+
+setInterval(function () {
+  ssc_cache = {}
+}, 10 * 1e3);
+
+var ssc_uniqueID = function () {
+  var e = 0;
+  return function (t) {
+    return t.ssc_uniqueID || (t.ssc_uniqueID = e++)
+  }
+}();
+
+var ischrome = /chrome/.test(navigator.userAgent.toLowerCase());
+
+if (ischrome) {
+  ssc_addEvent("mousedown", ssc_mousedown);
+  ssc_addEvent("mousewheel", ssc_wheel);
+  ssc_addEvent("load", ssc_init)
+}

@@ -1,0 +1,24 @@
+{
+  "name": "denpatin.github.io",
+  "version": "1.0.0",
+  "description": "Den Patin's personal website",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/denpatin/denpatin.github.io.git"
+  },
+  "author": {
+    "name": "Den Patin",
+    "email": "denpatin@gmail.com",
+    "url": "http://dpat.in"
+  },
+  "homepage": "https://github.com/denpatin/denpatin.github.io",
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-concat-css": "^2.2.0",
+    "gulp-if": "^2.0.0",
+    "gulp-minify-css": "^1.2.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.4.1"
+  }
+}
