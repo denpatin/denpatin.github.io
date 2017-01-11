@@ -15,9 +15,10 @@
         scrollTop: a(c.attr("href")).offset().top
       }, 1e3), b.preventDefault()
     }), a("#intro").backstretch([
+      "assets/images/bao.jpg",
       "assets/images/sablino.jpg",
-      "assets/images/brest1.jpg",
-      "assets/images/brest2.jpg"
+      "assets/images/brest1.jpg"
+      // "assets/images/brest2.jpg"
     ], {
       duration: 3e3,
       fade: 750
