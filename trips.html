@@ -118,6 +118,7 @@
         function processTravelData(trips, homeCountry, minLength) {
             const countryStay = {};
             const cityStay = {};
+            const allCities = {};
 
             trips.forEach(trip => {
                 const duration = calculateStayDuration(trip.date_start, trip.date_end) + 1; // Add 1 to include end day
@@ -125,17 +126,35 @@
                 const city = trip.place.trim();
                 const countryCode = trip.country_code ? trip.country_code.trim().toLowerCase() : '';
 
+                // Accumulate country stay regardless of minLength
+                if (!countryStay[country]) {
+                    countryStay[country] = 0;
+                }
+                countryStay[country] += duration;
+
+                // Accumulate city stay for all cities
+                if (!allCities[city]) {
+                    allCities[city] = 0;
+                }
+                allCities[city] += duration;
+
+                // Accumulate city stay only if it meets the minLength criteria
                 if (duration >= minLength && (!homeCountry || (country.toLowerCase() !== homeCountry.toLowerCase() && countryCode !== homeCountry.toLowerCase()))) {
-                    if (!countryStay[country]) {
-                        countryStay[country] = 0;
-                    }
                     if (!cityStay[city]) {
                         cityStay[city] = 0;
                     }
-                    countryStay[country] += duration;
                     cityStay[city] += duration;
                 }
             });
+
+            // Filter out home country from country stay
+            if (homeCountry) {
+                Object.keys(countryStay).forEach(country => {
+                    if (country.toLowerCase() === homeCountry.toLowerCase()) {
+                        delete countryStay[country];
+                    }
+                });
+            }
 
             const sortedCountries = Object.entries(countryStay)
                 .sort((a, b) => b[1] - a[1])
