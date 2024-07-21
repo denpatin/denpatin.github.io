@@ -118,7 +118,6 @@
         function processTravelData(trips, homeCountry, minLength) {
             const countryStay = {};
             const cityStay = {};
-            const allCities = {};
 
             trips.forEach(trip => {
                 const duration = calculateStayDuration(trip.date_start, trip.date_end) + 1; // Add 1 to include end day
@@ -131,12 +130,6 @@
                     countryStay[country] = 0;
                 }
                 countryStay[country] += duration;
-
-                // Accumulate city stay for all cities
-                if (!allCities[city]) {
-                    allCities[city] = 0;
-                }
-                allCities[city] += duration;
 
                 // Accumulate city stay only if it meets the minLength criteria
                 if (duration >= minLength && (!homeCountry || (country.toLowerCase() !== homeCountry.toLowerCase() && countryCode !== homeCountry.toLowerCase()))) {
@@ -155,6 +148,13 @@
                     }
                 });
             }
+
+            // Filter countries that don't meet the minLength criteria
+            Object.keys(countryStay).forEach(country => {
+                if (countryStay[country] < minLength) {
+                    delete countryStay[country];
+                }
+            });
 
             const sortedCountries = Object.entries(countryStay)
                 .sort((a, b) => b[1] - a[1])
