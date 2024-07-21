@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Data</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.1/css/bulma.min.css">
+    <style>
+        .container {
+            margin: 20px;
+            padding: 20px;
+        }
+        .columns {
+            margin-top: 20px;
+        }
+        .column {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        .notification {
+            margin: 20px;
+        }
+        .highlight {
+            background-color: #ffeeba;
+        }
+        table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .centered {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .form-container .field {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .form-container .field .label {
+            margin-bottom: 5px;
+        }
+        .form-container .control {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container has-text-centered">
+        <h1 id="main-title" class="title">Travel Data</h1>
+        <div class="form-container">
+            <div class="field">
+                <label class="label" for="login">Nomadlist Login*</label>
+                <div class="control">
+                    <input id="login" class="input" type="text" placeholder="Your login" required>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" for="home">Your Home Country</label>
+                <div class="control">
+                    <input id="home" class="input" type="text" placeholder="E.g. Russia">
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" for="length">Minimum Length of Stay to Consider</label>
+                <div class="control">
+                    <input id="length" class="input" type="number" placeholder="In days, default 10" min="1">
+                </div>
+            </div>
+            <div class="control">
+                <button id="fetch-data" class="button is-primary">Fetch Data</button>
+            </div>
+        </div>
+        <div id="content" class="columns is-centered">
+            <div id="country-list" class="column"></div>
+            <div id="city-list" class="column"></div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchTravelData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                return data.trips;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function calculateStayDuration(dateStart, dateEnd) {
+            const startDate = new Date(dateStart);
+            const endDate = new Date(dateEnd);
+            const timeDiff = endDate - startDate;
+            const daysDiff = timeDiff / (1000 * 3600 * 24);
+            return Math.ceil(daysDiff); // Ensure that 1-day trips are counted as 1 day
+        }
+
+        function processTravelData(trips, homeCountry, minLength) {
+            const countryStay = {};
+            const cityStay = {};
+
+            trips.forEach(trip => {
+                const duration = calculateStayDuration(trip.date_start, trip.date_end) + 1; // Add 1 to include end day
+                const country = trip.country.trim();
+                const city = trip.place.trim();
+                const countryCode = trip.country_code ? trip.country_code.trim().toLowerCase() : '';
+
+                if (duration >= minLength && (!homeCountry || (country.toLowerCase() !== homeCountry.toLowerCase() && countryCode !== homeCountry.toLowerCase()))) {
+                    if (!countryStay[country]) {
+                        countryStay[country] = 0;
+                    }
+                    if (!cityStay[city]) {
+                        cityStay[city] = 0;
+                    }
+                    countryStay[country] += duration;
+                    cityStay[city] += duration;
+                }
+            });
+
+            const sortedCountries = Object.entries(countryStay)
+                .sort((a, b) => b[1] - a[1])
+                .map(([country, duration]) => ({ country, duration }));
+            
+            const sortedCities = Object.entries(cityStay)
+                .sort((a, b) => b[1] - a[1])
+                .map(([city, duration]) => ({ city, duration }));
+
+            return { sortedCountries, sortedCities };
+        }
+
+        function displayData(sortedCountries, sortedCities) {
+            const countryList = document.getElementById('country-list');
+            const cityList = document.getElementById('city-list');
+
+            const highlightClass = "highlight";
+
+            const countryTable = `
+                <h2>Countries by Stay Duration</h2>
+                <table class="centered">
+                    <tr><th>Country</th><th>Days</th></tr>
+                    ${sortedCountries.map((item, index) => `
+                        <tr class="${index < 10 ? highlightClass : ''}">
+                            <td>${item.country}</td>
+                            <td>${item.duration}</td>
+                        </tr>`).join('')}
+                </table>`;
+
+            const cityTable = `
+                <h2>Cities by Stay Duration</h2>
+                <table class="centered">
+                    <tr><th>City</th><th>Days</th></tr>
+                    ${sortedCities.map((item, index) => `
+                        <tr class="${index < 10 ? highlightClass : ''}">
+                            <td>${item.city}</td>
+                            <td>${item.duration}</td>
+                        </tr>`).join('')}
+                </table>`;
+
+            countryList.innerHTML = countryTable;
+            cityList.innerHTML = cityTable;
+        }
+
+        async function main() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const forParam = urlParams.get('for');
+            const homeParam = urlParams.get('home');
+            const lengthParam = parseInt(urlParams.get('length'), 10) || 10;
+
+            if (forParam) {
+                const url = `https://nomadlist.com/@${forParam}.json`;
+                const trips = await fetchTravelData(url);
+                
+                if (trips) {
+                    document.getElementById('main-title').innerText = `Hi, ${forParam}`;
+                    const { sortedCountries, sortedCities } = processTravelData(trips, homeParam, lengthParam);
+                    displayData(sortedCountries, sortedCities);
+                } else {
+                    document.getElementById('content').innerHTML = '<p class="notification is-danger">Please enter a valid username from the site.</p>';
+                }
+            } else {
+                document.getElementById('content').innerHTML = '';
+            }
+        }
+
+        document.getElementById('fetch-data').addEventListener('click', () => {
+            const login = document.getElementById('login').value.trim();
+            const home = document.getElementById('home').value.trim();
+            const length = document.getElementById('length').value.trim();
+            if (login) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('for', login);
+                if (home) {
+                    url.searchParams.set('home', home);
+                } else {
+                    url.searchParams.delete('home');
+                }
+                if (length) {
+                    url.searchParams.set('length', length);
+                } else {
+                    url.searchParams.delete('length');
+                }
+                window.location.href = url.toString();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const forParam = urlParams.get('for');
+            const homeParam = urlParams.get('home');
+            const lengthParam = urlParams.get('length');
+
+            if (forParam) {
+                document.getElementById('login').value = forParam;
+            }
+            if (homeParam) {
+                document.getElementById('home').value = homeParam;
+            }
+            if (lengthParam) {
+                document.getElementById('length').value = lengthParam;
+            }
+
+            // Добавление обработчика события keydown
+            ['login', 'home', 'length'].forEach(id => {
+                document.getElementById(id).addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        document.getElementById('fetch-data').click();
+                    }
+                });
+            });
+        });
+
+        main();
+    </script>
+</body>
+</html>
