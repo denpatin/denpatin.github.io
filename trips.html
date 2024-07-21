@@ -12,21 +12,20 @@
         }
         .columns {
             margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         .column {
             padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
+            flex: 1;
+            min-width: 300px;
         }
         h2 {
             margin-bottom: 10px;
         }
         .notification {
             margin: 20px;
-        }
-        .highlight {
-            background-color: #ffeeba;
         }
         table {
             width: 100%;
@@ -42,12 +41,6 @@
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        .centered {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
         .form-container {
             margin-bottom: 20px;
         }
@@ -60,6 +53,53 @@
         }
         .form-container .control {
             margin-right: 10px;
+        }
+        .flag {
+            margin-left: 5px;
+        }
+        .highlight-blue {
+            background-color: #ccf2ff;
+        }
+        .highlight-green {
+            background-color: #ccffcc;
+        }
+        .highlight-yellow {
+            background-color: #ffffcc;
+        }
+        .highlight-red {
+            background-color: #ffcccc;
+        }
+        .highlight-orange {
+            background-color: #fff2cc;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .legend-blue {
+            background-color: #ccf2ff;
+        }
+        .legend-green {
+            background-color: #ccffcc;
+        }
+        .legend-yellow {
+            background-color: #ffffcc;
+        }
+        .legend-orange {
+            background-color: #fff2cc;
+        }
+        .legend-red {
+            background-color: #ffcccc;
         }
     </style>
 </head>
@@ -74,9 +114,9 @@
                 </div>
             </div>
             <div class="field">
-                <label class="label" for="home">Your Home Country</label>
+                <label class="label" for="home">Country to Exclude from Stats</label>
                 <div class="control">
-                    <input id="home" class="input" type="text" placeholder="E.g. Russia">
+                    <input id="home" class="input" type="text" placeholder="E.g. your home country">
                 </div>
             </div>
             <div class="field">
@@ -89,9 +129,16 @@
                 <button id="fetch-data" class="button is-primary">Fetch Data</button>
             </div>
         </div>
-        <div id="content" class="columns is-centered">
+        <div id="content" class="columns">
             <div id="country-list" class="column"></div>
             <div id="city-list" class="column"></div>
+        </div>
+        <div class="legend">
+            <div class="legend-item legend-red">> 1 year</div>
+            <div class="legend-item legend-orange">> 6 months</div>
+            <div class="legend-item legend-yellow">> 3 months</div>
+            <div class="legend-item legend-green">> 1 month</div>
+            <div class="legend-item legend-blue">> 1 week</div>
         </div>
     </div>
 
@@ -115,21 +162,55 @@
             return Math.ceil(daysDiff); // Ensure that 1-day trips are counted as 1 day
         }
 
+        function formatDuration(days) {
+            const weeks = (days / 7).toFixed(1);
+            const months = (days / 30.4375).toFixed(1);
+            const years = (days / 365.25).toFixed(1);
+            let result = `${days} days`;
+            if (days >= 365) {
+                result += ` (${years} years)`;
+            } else if (days >= 30) {
+                result += ` (${months} months)`;
+            } else if (days >= 7) {
+                result += ` (${weeks} weeks)`;
+            }
+            return result;
+        }
+
+        function getHighlightClass(days) {
+            if (days > 365) {
+                return 'highlight-red';
+            } else if (days >= 180) {
+                return 'highlight-orange';
+            } else if (days >= 90) {
+                return 'highlight-yellow';
+            } else if (days >= 30) {
+                return 'highlight-green';
+            } else if (days >= 7) {
+                return 'highlight-blue';
+            } else {
+                return '';
+            }
+        }
+
         function processTravelData(trips, homeCountry, minLength) {
             const countryStay = {};
             const cityStay = {};
+            const countryCities = {};
 
             trips.forEach(trip => {
                 const duration = calculateStayDuration(trip.date_start, trip.date_end) + 1; // Add 1 to include end day
                 const country = trip.country.trim();
                 const city = trip.place.trim();
-                const countryCode = trip.country_code ? trip.country_code.trim().toLowerCase() : '';
+                const countryCode = trip.country_code ? trip.country_code.trim().toUpperCase() : '';
 
                 // Accumulate country stay regardless of minLength
                 if (!countryStay[country]) {
                     countryStay[country] = 0;
+                    countryCities[country] = new Set();
                 }
                 countryStay[country] += duration;
+                countryCities[country].add(city);
 
                 // Accumulate city stay only if it meets the minLength criteria
                 if (duration >= minLength && (!homeCountry || (country.toLowerCase() !== homeCountry.toLowerCase() && countryCode !== homeCountry.toLowerCase()))) {
@@ -145,6 +226,7 @@
                 Object.keys(countryStay).forEach(country => {
                     if (country.toLowerCase() === homeCountry.toLowerCase()) {
                         delete countryStay[country];
+                        delete countryCities[country];
                     }
                 });
             }
@@ -158,40 +240,53 @@
 
             const sortedCountries = Object.entries(countryStay)
                 .sort((a, b) => b[1] - a[1])
-                .map(([country, duration]) => ({ country, duration }));
-            
+                .map(([country, duration]) => {
+                    let countryCode = trips.find(trip => trip.country.trim() === country).country_code.trim().toUpperCase();
+                    if (countryCode === 'UK') {
+                        countryCode = 'GB';
+                    }
+                    return { country, duration, cities: countryCities[country].size, countryCode };
+                });
+
             const sortedCities = Object.entries(cityStay)
                 .sort((a, b) => b[1] - a[1])
-                .map(([city, duration]) => ({ city, duration }));
+                .map(([city, duration]) => {
+                    let countryCode = trips.find(trip => trip.place.trim() === city).country_code.trim().toUpperCase();
+                    if (countryCode === 'UK') {
+                        countryCode = 'GB';
+                    }
+                    return { city, duration, countryCode };
+                });
 
             return { sortedCountries, sortedCities };
+        }
+
+        function getFlagImageUrl(countryCode) {
+            return `https://flagsapi.com/${countryCode}/shiny/16.png`;
         }
 
         function displayData(sortedCountries, sortedCities) {
             const countryList = document.getElementById('country-list');
             const cityList = document.getElementById('city-list');
 
-            const highlightClass = "highlight";
-
             const countryTable = `
-                <h2>Countries by Stay Duration</h2>
                 <table class="centered">
-                    <tr><th>Country</th><th>Days</th></tr>
-                    ${sortedCountries.map((item, index) => `
-                        <tr class="${index < 10 ? highlightClass : ''}">
-                            <td>${item.country}</td>
-                            <td>${item.duration}</td>
+                    <tr><th>Country</th><th>Cities</th><th>Period of Stay</th></tr>
+                    ${sortedCountries.map(item => `
+                        <tr class="${getHighlightClass(item.duration)}">
+                            <td>${item.country} <img src="${getFlagImageUrl(item.countryCode)}" alt="Flag" class="flag"></td>
+                            <td>${item.cities}</td>
+                            <td>${formatDuration(item.duration)}</td>
                         </tr>`).join('')}
                 </table>`;
 
             const cityTable = `
-                <h2>Cities by Stay Duration</h2>
                 <table class="centered">
-                    <tr><th>City</th><th>Days</th></tr>
-                    ${sortedCities.map((item, index) => `
-                        <tr class="${index < 10 ? highlightClass : ''}">
-                            <td>${item.city}</td>
-                            <td>${item.duration}</td>
+                    <tr><th>City</th><th>Period of Stay</th></tr>
+                    ${sortedCities.map(item => `
+                        <tr class="${getHighlightClass(item.duration)}">
+                            <td>${item.city} <img src="${getFlagImageUrl(item.countryCode)}" alt="Flag" class="flag"></td>
+                            <td>${formatDuration(item.duration)}</td>
                         </tr>`).join('')}
                 </table>`;
 
@@ -210,11 +305,11 @@
                 const trips = await fetchTravelData(url);
                 
                 if (trips) {
-                    document.getElementById('main-title').innerText = `Hi, ${forParam}`;
+                    document.getElementById('main-title').innerText = `Travel Data for ${forParam}`;
                     const { sortedCountries, sortedCities } = processTravelData(trips, homeParam, lengthParam);
                     displayData(sortedCountries, sortedCities);
                 } else {
-                    document.getElementById('content').innerHTML = '<p class="notification is-danger">Please enter a valid username from the site.</p>';
+                    document.getElementById('content').innerHTML = '<p class="notification is-danger">Please enter a valid username from the nomadlist website.</p>';
                 }
             } else {
                 document.getElementById('content').innerHTML = '';
