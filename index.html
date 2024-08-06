@@ -16,6 +16,16 @@
     <link type="text/css" rel="stylesheet" href="assets/css/style.css" media="screen" />
   </head>
   <body>
+    <script>
+      const urlMap = {
+        "go/tg": "https://t.me/dens_den",
+        "go/trips": "https://dpat.in/trips.html?for=denpatin&home=Russia&length=5"
+      };
+      const path = window.location.pathname.substring(1);
+      if (urlMap[path]) {
+        window.location.href = urlMap[path];
+      }
+    </script>
     <div class="wrapper">
       <div id="preloader">
         <div id="status">
