@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page not found</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const urlMap = {
+            "go/tg": "https://t.me/dens_den",
+            "go/trips": "https://dpat.in/trips.html?for=denpatin&home=Russia&length=5"
+        };
+
+        const path = window.location.pathname.substring(1);
+
+        if (urlMap[path]) {
+            window.location.href = urlMap[path];
+        } else {
+            document.body.innerHTML = `
+                <h1>The page you are looking for is not found</h1>
+                <p>Maybe you want to try one of these:</p>
+                <ul>
+                    <li><a href="/go/tg">My Telegram</a></li>
+                    <li><a href="/go/trips">All Trips</a></li>
+                </ul>
+            `;
+        }
+    </script>
+</body>
+</html>
